@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="void">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="VULNDEX — A-to-Z Web Application Attack Lab. 121 web vulnerabilities with full testing methodology, lab setup, WAF bypass, tools and references." />
+<title>VULNDEX // A→Z Web Attack Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%A3%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<!-- animated backdrop layers -->
+<canvas id="matrix" aria-hidden="true"></canvas>
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="grid-overlay" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+<div class="noise" aria-hidden="true"></div>
+
+<!-- boot intro -->
+<div id="boot" class="boot">
+  <div class="boot-inner">
+    <pre id="boot-log" class="boot-log"></pre>
+    <button id="boot-skip" class="boot-skip">[ skip&nbsp;→ ]</button>
+  </div>
+</div>
+
+<!-- top bar -->
+<header class="topbar">
+  <a class="brand" href="#/">
+    <span class="brand-mark">☣</span>
+    <span class="brand-text">VULN<b>DEX</b></span>
+    <span class="brand-sub">A→Z ATTACK LAB</span>
+  </a>
+  <div class="topbar-tools">
+    <button id="open-search" class="cmd-btn" title="Search (Ctrl+K)">
+      <span class="cmd-ico">⌕</span><span>Search</span><kbd>Ctrl K</kbd>
+    </button>
+    <a class="ghost-btn" href="#/about">Field Manual</a>
+    <button id="reset-progress" class="ghost-btn danger" title="Reset practiced progress">Reset</button>
+  </div>
+</header>
+
+<!-- command palette -->
+<div id="palette" class="palette" hidden>
+  <div class="palette-box">
+    <div class="palette-input">
+      <span class="palette-prompt">root@vulndex:~$</span>
+      <input id="palette-q" type="text" placeholder="search vuln, category, payload, tool…" autocomplete="off" spellcheck="false" />
+      <kbd>esc</kbd>
+    </div>
+    <ul id="palette-results" class="palette-results"></ul>
+  </div>
+</div>
+
+<main id="app">
+
+  <!-- ============ HOME / GRID VIEW ============ -->
+  <section id="view-home" class="view">
+    <div class="hero">
+      <div class="hero-text">
+        <div class="kicker">// offensive security knowledge base</div>
+        <h1 class="hero-title glitch" data-text="THE WEB ATTACK CODEX">THE WEB ATTACK CODEX</h1>
+        <p class="hero-desc">
+          <b id="stat-total">121</b> web application vulnerabilities. Each one a full dossier:
+          <span class="hl">how to test A→Z</span>, <span class="hl">lab setup</span>,
+          <span class="hl">WAF / filter bypass</span>, <span class="hl">payloads</span>,
+          <span class="hl">tools</span> and <span class="hl">references</span>.
+        </p>
+        <div class="hero-actions">
+          <button class="cta" id="cta-explore">⌁ Start Exploring</button>
+          <a class="cta ghost" href="#/about">Read the Field Manual</a>
+        </div>
+      </div>
+      <div class="hero-stats" id="hero-stats"><!-- injected --></div>
+    </div>
+
+    <div class="controls">
+      <div class="search-inline">
+        <span>⌕</span>
+        <input id="filter-q" type="text" placeholder="filter vulnerabilities…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="chip-row" id="severity-chips"></div>
+    </div>
+
+    <nav class="cat-rail" id="cat-rail"></nav>
+
+    <div id="progress-wrap" class="progress-wrap">
+      <div class="progress-meta"><span>PRACTICE PROGRESS</span><span id="progress-label">0 / 121</span></div>
+      <div class="progress-bar"><i id="progress-fill"></i></div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" hidden>// no vulnerabilities match the current filter</div>
+  </section>
+
+  <!-- ============ DETAIL / DOSSIER VIEW ============ -->
+  <section id="view-detail" class="view" hidden></section>
+
+  <!-- ============ ABOUT VIEW ============ -->
+  <section id="view-about" class="view" hidden></section>
+
+</main>
+
+<footer class="footer">
+  <div>VULNDEX // built for <b>authorized</b> security testing, CTFs &amp; education only.</div>
+  <div class="footer-links">
+    <a href="https://hacktricks.wiki/en/index.html" target="_blank" rel="noopener">HackTricks</a>
+    <a href="https://github.com/0xKayala/A-to-Z-Vulnerabilities" target="_blank" rel="noopener">A-to-Z Repo</a>
+    <a href="https://portswigger.net/web-security" target="_blank" rel="noopener">PortSwigger Academy</a>
+    <a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank" rel="noopener">OWASP WSTG</a>
+  </div>
+</footer>
+
+<!-- toast -->
+<div id="toast" class="toast" hidden></div>
+
+<script src="assets/js/vulns.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

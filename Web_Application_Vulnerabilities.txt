@@ -1,0 +1,162 @@
+Web Application Vulnerabilities
+
+Authentication & Session Management
+1. Broken Authentication
+2. Weak Password Policy
+3. Default Credentials
+4. Password Reuse
+5. Username Enumeration
+6. Account Enumeration
+7. Missing Account Lockout
+8. Weak Multi-Factor Authentication (MFA)
+9. MFA Bypass
+10. Session Fixation
+11. Session Hijacking
+12. Predictable Session Tokens
+13. Session Token Disclosure
+14. Missing Session Timeout
+15. Concurrent Session Abuse
+16. Insecure Remember Me Functionality
+17. Password Reset Vulnerabilities
+18. Weak OTP Implementation
+19. Authentication Bypass
+20. Missing Re-Authentication for Sensitive Actions
+
+Access Control Vulnerabilities
+21. Broken Access Control
+22. Vertical Privilege Escalation
+23. Horizontal Privilege Escalation
+24. Insecure Direct Object References (IDOR)
+25. Forced Browsing
+26. Missing Function-Level Access Control
+27. Missing Object-Level Authorization
+28. Privilege Escalation
+29. Unauthorized API Access
+30. Role Manipulation
+31. Directory Traversal
+32. Path Traversal
+33. File Permission Misconfiguration
+
+Injection Vulnerabilities
+34. SQL Injection (SQLi)
+35. Blind SQL Injection
+36. Time-Based SQL Injection
+37. Error-Based SQL Injection
+38. Union-Based SQL Injection
+39. NoSQL Injection
+40. LDAP Injection
+41. XPath Injection
+42. XML Injection
+43. Command Injection
+44. OS Command Injection
+45. CRLF Injection
+46. Host Header Injection
+47. Email Header Injection
+48. Server-Side Template Injection (SSTI)
+49. Expression Language Injection
+50. HTTP Parameter Pollution (HPP)
+
+Cross-Site Scripting (XSS)
+51. Reflected XSS
+52. Stored XSS
+53. DOM-Based XSS
+54. Blind XSS
+55. Self XSS
+56. Mutation XSS
+57. Client-Side Template Injection
+
+CSRF
+58. Cross-Site Request Forgery (CSRF)
+59. Login CSRF
+60. Stored CSRF
+
+File Upload Vulnerabilities
+61. Unrestricted File Upload
+62. Arbitrary File Upload
+63. Malicious File Upload
+64. Web Shell Upload
+65. Content-Type Bypass
+66. Double Extension Bypass
+67. File Upload Path Traversal
+68. SVG XSS Upload
+
+File Inclusion Vulnerabilities
+69. Local File Inclusion (LFI)
+70. Remote File Inclusion (RFI)
+
+XML Vulnerabilities
+71. XML External Entity (XXE)
+72. Blind XXE
+73. XML Bomb
+
+Deserialization Vulnerabilities
+74. Insecure Deserialization
+75. Object Injection
+
+API Security Vulnerabilities
+76. Broken Object Level Authorization (BOLA)
+77. Excessive Data Exposure
+78. Mass Assignment
+79. JWT Vulnerabilities
+80. API Authentication Bypass
+
+Server-Side Vulnerabilities
+81. SSRF
+82. Blind SSRF
+83. Open Redirect
+84. Cache Poisoning
+85. HTTP Request Smuggling
+
+Business Logic Vulnerabilities
+86. Price Manipulation
+87. Coupon Abuse
+88. Payment Bypass
+89. Race Conditions
+90. Workflow Bypass
+
+Information Disclosure
+91. Sensitive Data Exposure
+92. Source Code Disclosure
+93. Backup File Disclosure
+94. Verbose Error Messages
+95. Stack Trace Disclosure
+
+Security Misconfiguration
+96. Missing Security Headers
+97. Misconfigured CORS
+98. Insecure Cookie Attributes
+99. Missing HSTS
+100. Clickjacking
+
+Cryptographic Vulnerabilities
+101. Weak Encryption
+102. Weak Hashing Algorithm
+103. Hardcoded Secrets
+104. Weak Random Number Generation
+
+Client-Side Vulnerabilities
+105. DOM Clobbering
+106. Prototype Pollution
+107. Client-Side Validation Bypass
+
+Cloud & Modern Web Vulnerabilities
+108. Cloud Storage Bucket Exposure
+109. CI/CD Pipeline Exposure
+110. Secrets Exposure in Repositories
+111. GraphQL Injection
+
+WebSocket Vulnerabilities
+112. WebSocket Authentication Bypass
+113. WebSocket Hijacking
+
+OAuth & SSO Vulnerabilities
+114. OAuth Token Leakage
+115. State Parameter Bypass
+116. SAML Misconfiguration
+
+Advanced Vulnerabilities
+117. Dependency Confusion
+118. Subdomain Takeover
+119. DNS Rebinding
+120. CSP Bypass
+121. Account Takeover (ATO)
