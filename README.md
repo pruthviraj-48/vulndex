@@ -4,7 +4,7 @@ A self-contained, offline-capable study console for **121 web application vulner
 Each vulnerability is a full dossier with the same 7 sections so your testing workflow becomes muscle memory:
 
 - **Overview** — what it is + impact
-- **Test A→Z** — full manual methodology, step by step
+- **Test A→Z** — graded methodology in three tiers: **Beginner** (recon & detection) → **Intermediate** (exploitation) → **Advanced** (chaining, automation & WAF/filter bypass)
 - **Lab Setup** — how to stand up a safe practice target (PortSwigger labs, DVWA, Juice Shop, docker)
 - **Payloads** — copy-paste probes & exploit strings
 - **WAF Bypass** — defeating filters, WAFs, weak blocklists, rate limits
@@ -32,7 +32,8 @@ python3 -m http.server 8099
 
 ## Features
 
-- Cyber-noir holographic theme (animated matrix bg, glass cards, glitch title)
+- Cyber-noir holographic theme with **3D tilt cards** (cursor parallax, glare, depth, animated gradient borders)
+- **Beginner → Advanced** level switcher inside every dossier's Test tab
 - Instant filter + **command palette** (`Ctrl/Cmd+K` or `/`)
 - Category rail + severity chips (Critical/High/Medium/Low)
 - Tabbed **dossier** view per vuln with copy-to-clipboard payloads

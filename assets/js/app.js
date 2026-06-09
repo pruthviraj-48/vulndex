@@ -85,6 +85,7 @@ function renderStats(){
     <div class="hstat c-mag"><div class="num">${cats}</div><div class="lbl">ATTACK CLASSES</div></div>
     <div class="hstat c-amber"><div class="num">${crit}</div><div class="lbl">CRITICAL RATED</div></div>
     <div class="hstat c-lime"><div class="num" id="hs-done">${done}</div><div class="lbl">PRACTICED</div></div>`;
+  $$('.hstat').forEach(s=>bindTilt(s,12));
 }
 
 /* ================= FILTER CONTROLS ================= */
@@ -140,7 +141,65 @@ function renderGrid(){
         <span class="card-done-flag">✓ practiced</span>
       </div>
     </article>`).join('');
-  $$('.card',grid).forEach(c=>c.onclick=()=>location.hash='#/vuln/'+c.dataset.slug);
+  $$('.card',grid).forEach(c=>{ c.onclick=()=>location.hash='#/vuln/'+c.dataset.slug; bindTilt(c,9); });
+}
+
+/* ================= 3D TILT ================= */
+const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
+function bindTilt(el, max){
+  if(REDUCED) return;
+  const m = max||10;
+  el.addEventListener('pointermove', e=>{
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX-r.left)/r.width - .5;
+    const py = (e.clientY-r.top)/r.height - .5;
+    el.style.setProperty('--rx', (py*-m).toFixed(2)+'deg');
+    el.style.setProperty('--ry', (px*m*1.15).toFixed(2)+'deg');
+    el.style.setProperty('--mx', (px*100+50).toFixed(1)+'%');
+    el.style.setProperty('--my', (py*100+50).toFixed(1)+'%');
+  });
+  el.addEventListener('pointerleave', ()=>{
+    el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg');
+    el.style.setProperty('--mx','50%'); el.style.setProperty('--my','50%');
+  });
+}
+
+/* ================= LEVELED METHODOLOGY ================= */
+// uses v.levels {beginner,intermediate,advanced} when present; otherwise derives
+// a graded path from the existing ordered methodology + bypass techniques.
+function levelize(v){
+  const L = v.levels;
+  if(L && (L.beginner||L.intermediate||L.advanced)){
+    const norm = a => (a||[]).map(s=> typeof s==='string'?{step:s,detail:''}:{step:s.step||s.act||'',detail:s.detail||s.note||''});
+    return { beginner:norm(L.beginner), intermediate:norm(L.intermediate), advanced:norm(L.advanced) };
+  }
+  const steps = (v.howToTest||[]).map((s,i)=>({step:s, detail:(v.testNotes&&v.testNotes[i])||''}));
+  const n = steps.length;
+  if(!n) return null;
+  const a = Math.ceil(n/3), b = Math.ceil(n*2/3);
+  const advanced = steps.slice(b).concat((v.bypass||[]).map(bp=>({step:bp, detail:'filter / WAF bypass'})));
+  return { beginner:steps.slice(0,a), intermediate:steps.slice(a,b), advanced };
+}
+const LEVELS = [
+  {k:'beginner',     t:'Beginner',     i:'①', d:'Recon &amp; detection — map the surface and confirm the bug exists.'},
+  {k:'intermediate', t:'Intermediate', i:'②', d:'Exploitation — turn the finding into concrete impact.'},
+  {k:'advanced',     t:'Advanced',     i:'③', d:'Chaining, automation &amp; filter / WAF bypass — push it to maximum impact.'},
+];
+function stepLi(s){
+  const step = typeof s==='string'?s:s.step;
+  const det  = typeof s==='string'?'':s.detail;
+  return `<li><span class="step-act">${esc(step)}</span>${det?`<span class="step-desc">↳ ${esc(det)}</span>`:''}</li>`;
+}
+function renderLevels(v){
+  const lv = levelize(v);
+  if(!lv) return '<ol class="steps"><li>Methodology coming soon.</li></ol>';
+  const seg = LEVELS.map((x,i)=>`<button class="lvl ${i===0?'on':''}" data-lvl="${x.k}"><span class="lvl-i">${x.i}</span>${x.t}<span class="lvl-n">${(lv[x.k]||[]).length}</span></button>`).join('');
+  const panes = LEVELS.map((x,i)=>{
+    const items = lv[x.k]||[];
+    const body = items.length? `<ol class="steps">${items.map(stepLi).join('')}</ol>` : '<p>// no steps catalogued at this level yet — see the other levels and the Bypass / CTF tabs.</p>';
+    return `<div class="lvl-pane lvl-${x.k} ${i===0?'on':''}" data-lvlpane="${x.k}"><p class="lvl-intro">${x.d}</p>${body}</div>`;
+  }).join('');
+  return `<div class="lvl-switch" data-lvlswitch>${seg}</div>${panes}`;
 }
 
 /* ================= DETAIL DOSSIER ================= */
@@ -226,8 +285,8 @@ function renderDetail(slug){
         </div>
 
         <div class="panel" data-panel="test">
-          <h3>How to test — A → Z</h3>
-          <ol class="steps">${(v.howToTest||[]).map((s,i)=>{const d=(v.testNotes&&v.testNotes[i])?`<span class="step-desc">↳ ${esc(v.testNotes[i])}</span>`:'';return `<li><span class="step-act">${esc(s)}</span>${d}</li>`;}).join('')||'<li>Methodology coming soon.</li>'}</ol>
+          <h3>How to test — Beginner → Advanced</h3>
+          ${renderLevels(v)}
         </div>
 
         <div class="panel" data-panel="lab">
@@ -284,6 +343,10 @@ function renderDetail(slug){
   $$('.tab',root).forEach(tb=>tb.onclick=()=>{
     $$('.tab',root).forEach(x=>x.classList.remove('on')); tb.classList.add('on');
     $$('.panel',root).forEach(p=>p.classList.toggle('on',p.dataset.panel===tb.dataset.tab));
+  });
+  $$('.lvl',root).forEach(b=>b.onclick=()=>{
+    $$('.lvl',root).forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    $$('.lvl-pane',root).forEach(p=>p.classList.toggle('on',p.dataset.lvlpane===b.dataset.lvl));
   });
   $$('.copy',root).forEach(b=>b.onclick=()=>{
     navigator.clipboard?.writeText(b.nextElementSibling.textContent).then(()=>toast('Copied to clipboard'));
