@@ -21,7 +21,29 @@ const Store = {
 };
 
 /* ---------- state ---------- */
-let state = { q:'', sev:'all', cat:'all' };
+let state = { q:'', sev:'all', cat:'all', unpracticed:false };
+
+/* ---------- search index (memoised per vuln) ---------- */
+function searchHay(v){
+  if(v._hay) return v._hay;
+  const c = v.chain||{}, r = v.report||{};
+  const parts = [
+    v.name, v.category, v.summary, v.description, v.cwe,
+    (v.tags||[]).join(' '),
+    (v.tools||[]).map(t=>t.name||t).join(' '),
+    (v.payloads||[]).join(' '),
+    (v.bypass||[]).join(' '),
+    (v.annotatedPayloads||[]).map(a=>(a.p||'')+' '+(a.c||'')).join(' '),
+    (v.encoding||[]).map(e=>(e.layer||'')+' '+(e.sample||'')+' '+(e.note||'')).join(' '),
+    (v.levels?['beginner','intermediate','advanced'].map(k=>(v.levels[k]||[]).map(s=>(s.step||'')+' '+(s.detail||'')+' '+(s.how?(s.how.t||'')+' '+(s.how.c||''):'')).join(' ')).join(' '):''),
+    (c.feeders||[]).map(f=>(f.from||'')+' '+(f.how||'')).join(' '),
+    (c.pivots||[]).map(p=>(p.to||'')+' '+(p.how||'')+' '+(p.gain||'')).join(' '),
+    c.scenario ? (c.scenario.name||'')+' '+((c.scenario.steps||[]).join(' '))+' '+(c.scenario.result||'') : '',
+    [r.title, r.summary, r.impact, (r.steps||[]).join(' '), (r.remediation||[]).join(' ')].join(' '),
+    (v.notes||[]).join(' ')
+  ];
+  return v._hay = parts.join(' ').toLowerCase();
+}
 
 /* ================= BOOT INTRO ================= */
 function boot(){
@@ -118,18 +140,19 @@ function renderProgress(){
 function matches(v){
   if(state.sev!=='all' && v.severity!==state.sev) return false;
   if(state.cat!=='all' && v.category!==state.cat) return false;
-  if(state.q){
-    const q=state.q.toLowerCase();
-    const hay=[v.name,v.category,v.summary,(v.tags||[]).join(' '),(v.tools||[]).map(t=>t.name||t).join(' ')].join(' ').toLowerCase();
-    if(!hay.includes(q)) return false;
-  }
+  if(state.unpracticed && Store.has(v.id)) return false;
+  if(state.q && !searchHay(v).includes(state.q.toLowerCase())) return false;
   return true;
 }
 function renderGrid(){
   const grid = $('#grid'); const list = VULNS.filter(matches);
-  $('#empty').hidden = list.length>0;
+  const empty = $('#empty'); empty.hidden = list.length>0;
+  empty.textContent = state.q
+    ? `// no vulnerabilities match “${state.q}”${state.cat!=='all'?' in '+state.cat:''}`
+    : '// no vulnerabilities match the current filter';
+  grid.setAttribute('aria-label', `${list.length} of ${VULNS.length} vulnerabilities`);
   grid.innerHTML = list.map(v=>`
-    <article class="card ${Store.has(v.id)?'done':''}" data-slug="${v.slug}">
+    <a class="card ${Store.has(v.id)?'done':''}" href="#/vuln/${v.slug}" data-slug="${v.slug}" aria-label="${esc(v.name)} — ${esc(v.severity)} severity, ${esc(v.category)}">
       <div class="card-top">
         <span class="card-id">#${String(v.id).padStart(3,'0')}</span>
         <span class="sev sev-${v.severity}">${v.severity}</span>
@@ -140,27 +163,35 @@ function renderGrid(){
         <span class="card-cat">${esc(v.category)}</span>
         <span class="card-done-flag">✓ practiced</span>
       </div>
-    </article>`).join('');
-  $$('.card',grid).forEach(c=>{ c.onclick=()=>location.hash='#/vuln/'+c.dataset.slug; bindTilt(c,9); });
+    </a>`).join('');
+  $$('.card',grid).forEach(c=>bindTilt(c,9));
 }
 
 /* ================= 3D TILT ================= */
 const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
 function bindTilt(el, max){
   if(REDUCED) return;
-  const m = max||10;
+  const m = max||10; let rect=null, raf=0, cx=0, cy=0;
+  el.addEventListener('pointerenter', ()=>{ rect=el.getBoundingClientRect(); });
   el.addEventListener('pointermove', e=>{
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX-r.left)/r.width - .5;
-    const py = (e.clientY-r.top)/r.height - .5;
-    el.style.setProperty('--rx', (py*-m).toFixed(2)+'deg');
-    el.style.setProperty('--ry', (px*m*1.15).toFixed(2)+'deg');
-    el.style.setProperty('--mx', (px*100+50).toFixed(1)+'%');
-    el.style.setProperty('--my', (py*100+50).toFixed(1)+'%');
+    cx=e.clientX; cy=e.clientY;
+    if(raf) return;                              // throttle to one write per frame
+    raf=requestAnimationFrame(()=>{
+      raf=0; if(!rect) rect=el.getBoundingClientRect();
+      const px=(cx-rect.left)/rect.width - .5;
+      const py=(cy-rect.top)/rect.height - .5;
+      const s=el.style;
+      s.setProperty('--rx',(py*-m).toFixed(2)+'deg');
+      s.setProperty('--ry',(px*m*1.15).toFixed(2)+'deg');
+      s.setProperty('--mx',(px*100+50).toFixed(1)+'%');
+      s.setProperty('--my',(py*100+50).toFixed(1)+'%');
+    });
   });
   el.addEventListener('pointerleave', ()=>{
-    el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg');
-    el.style.setProperty('--mx','50%'); el.style.setProperty('--my','50%');
+    rect=null; if(raf){ cancelAnimationFrame(raf); raf=0; }
+    const s=el.style;
+    s.setProperty('--rx','0deg'); s.setProperty('--ry','0deg');
+    s.setProperty('--mx','50%'); s.setProperty('--my','50%');
   });
 }
 
@@ -170,7 +201,7 @@ function bindTilt(el, max){
 function levelize(v){
   const L = v.levels;
   if(L && (L.beginner||L.intermediate||L.advanced)){
-    const norm = a => (a||[]).map(s=> typeof s==='string'?{step:s,detail:''}:{step:s.step||s.act||'',detail:s.detail||s.note||''});
+    const norm = a => (a||[]).map(s=> typeof s==='string'?{step:s,detail:'',how:null}:{step:s.step||s.act||'',detail:s.detail||s.note||'',how:s.how||null});
     return { beginner:norm(L.beginner), intermediate:norm(L.intermediate), advanced:norm(L.advanced) };
   }
   const steps = (v.howToTest||[]).map((s,i)=>({step:s, detail:(v.testNotes&&v.testNotes[i])||''}));
@@ -188,7 +219,11 @@ const LEVELS = [
 function stepLi(s){
   const step = typeof s==='string'?s:s.step;
   const det  = typeof s==='string'?'':s.detail;
-  return `<li><span class="step-act">${esc(step)}</span>${det?`<span class="step-desc">↳ ${esc(det)}</span>`:''}</li>`;
+  const h    = (s&&typeof s==='object')?s.how:null;
+  const howHtml = (h&&(h.t||h.m||h.c))
+    ? `<span class="step-how"><span class="sh-lead">▸ how to test</span>${h.t?`<span class="sh-t">⚙ ${esc(h.t)}</span>`:''}${h.m?`<span class="sh-m">${esc(h.m)}</span>`:''}${h.c?`<code class="sh-c">${esc(h.c)}</code>`:''}</span>`
+    : '';
+  return `<li><span class="step-act">${esc(step)}</span>${det?`<span class="step-desc">↳ ${esc(det)}</span>`:''}${howHtml}</li>`;
 }
 function renderLevels(v){
   const lv = levelize(v);
@@ -232,7 +267,99 @@ function renderCtf(c){
   if(c.credit) h+=`<div class="ctf-credit">${esc(c.credit)}</div>`;
   return h || '<p>// walkthrough coming soon.</p>';
 }
-function renderDetail(slug){
+function cweTag(cwe){
+  const m=/CWE-(\d+)/i.exec(cwe||'');
+  return m
+    ? `<a class="tag tag-cwe" href="https://cwe.mitre.org/data/definitions/${m[1]}.html" target="_blank" rel="noopener" title="MITRE CWE-${m[1]} definition">${esc(cwe)} ↗</a>`
+    : `<span class="tag">${esc(cwe)}</span>`;
+}
+function dossierMarkdown(v){
+  const lv = levelize(v) || {beginner:[],intermediate:[],advanced:[]};
+  const tier = (t,arr)=> arr&&arr.length ? `\n### ${t}\n`+arr.map((s,i)=>{const h=s&&s.how; return `${i+1}. ${typeof s==='string'?s:s.step}${(s&&s.detail)?` — ${s.detail}`:''}${(h&&(h.t||h.c))?`\n   - _How to test:_ ${h.t||''}${h.m?` — ${h.m}`:''}${h.c?`  \`${h.c}\``:''}`:''}`;}).join('\n')+'\n' : '';
+  const list = (h,arr,bul='-')=> arr&&arr.length ? `\n## ${h}\n`+arr.map(x=>`${bul} ${typeof x==='string'?x:(x.name||x)}`).join('\n')+'\n' : '';
+  let m = `# ${v.name}\n\n`;
+  m += `**Severity:** ${v.severity}`; if(v.cwe) m+=`  ·  **${v.cwe}**`; m+=`  ·  **Category:** ${v.category}\n\n`;
+  m += `> ${v.summary}\n`;
+  if(v.description) m += `\n${v.description}\n`;
+  m += `\n## Test A→Z`;
+  m += tier('Beginner — recon & detection', lv.beginner);
+  m += tier('Intermediate — exploitation', lv.intermediate);
+  m += tier('Advanced — chaining, automation & bypass', lv.advanced);
+  m += list('Lab Setup', Array.isArray(v.labSetup)?v.labSetup:(v.labSetup?[v.labSetup]:[]));
+  if(v.payloads&&v.payloads.length) m += `\n## Payloads\n\`\`\`\n${v.payloads.join('\n')}\n\`\`\`\n`;
+  if(v.encoding&&v.encoding.length) m += `\n## Encode / Decode lab\n`+v.encoding.map(e=>`- **${e.layer}** — \`${e.sample}\`  \n  ${e.note}`).join('\n')+'\n';
+  m += list('WAF / Filter Bypass', v.bypass);
+  const c=v.chain;
+  if(c){
+    m += `\n## Chaining\n`;
+    if((c.feeders||[]).length) m += `**Leads in:**\n`+c.feeders.map(f=>`- ${f.from} → ${v.name}: ${f.how}`).join('\n')+'\n';
+    if((c.pivots||[]).length) m += `\n**Pivots out:**\n`+c.pivots.map(p=>`- ${v.name} → ${p.to}: ${p.how}${p.gain?` (${p.gain})`:''}`).join('\n')+'\n';
+    if(c.scenario) m += `\n**Kill-chain — ${c.scenario.name||'worked example'}:**\n`+(c.scenario.steps||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')+(c.scenario.result?`\n\n_Outcome: ${c.scenario.result}_`:'')+'\n';
+  }
+  if(v.report) m += `\n## Report Write-Up\n`+reportMarkdown(v,v.report);
+  m += list('Tools', (v.tools||[]).map(t=>typeof t==='string'?t:(t.desc?`${t.name} — ${t.desc}`:t.name)));
+  if(v.references&&v.references.length) m += `\n## References\n`+v.references.map(r=>`- [${r.title}](${r.url})`).join('\n')+'\n';
+  return m;
+}
+function renderChain(v){
+  const c = v.chain;
+  if(!c || typeof c!=='object') return '<p>// attack-chaining map is being added for this class — meanwhile the Test A→Z <b>Advanced</b> tier lists chaining ideas.</p>';
+  let h='';
+  if(Array.isArray(c.feeders)&&c.feeders.length){
+    h+=`<h4 class="sub">▣ Leads in — bugs that set this one up</h4><div class="chain-list">`+
+      c.feeders.map(o=>`<div class="chain-row chain-in"><div class="chain-flow"><span class="chain-node chain-src">${o.slug?`<a class="chain-link" href="#/vuln/${esc(o.slug)}">${esc(o.from)}</a>`:esc(o.from)}</span><span class="chain-arrow">⟶</span><span class="chain-node chain-cur">${esc(v.name)}</span></div><div class="chain-how">${esc(o.how)}</div></div>`).join('')+`</div>`;
+  }
+  if(Array.isArray(c.pivots)&&c.pivots.length){
+    h+=`<h4 class="sub">▶ Pivots out — where this attack escalates next</h4><div class="chain-list">`+
+      c.pivots.map(o=>`<div class="chain-row chain-out"><div class="chain-flow"><span class="chain-node chain-cur">${esc(v.name)}</span><span class="chain-arrow">⟶</span><span class="chain-node chain-dst">${o.slug?`<a class="chain-link" href="#/vuln/${esc(o.slug)}">${esc(o.to)}</a>`:esc(o.to)}</span></div><div class="chain-how">${esc(o.how)}${o.gain?` <span class="chain-gain">▸ ${esc(o.gain)}</span>`:''}</div></div>`).join('')+`</div>`;
+  }
+  if(c.scenario&&(c.scenario.steps||c.scenario.name)){
+    h+=`<h4 class="sub">⛓ Full kill-chain${c.scenario.name?` — ${esc(c.scenario.name)}`:''}</h4>`;
+    if(Array.isArray(c.scenario.steps)&&c.scenario.steps.length) h+=`<ol class="steps chain-steps">${c.scenario.steps.map(s=>`<li><span class="step-act">${esc(s)}</span></li>`).join('')}</ol>`;
+    if(c.scenario.result) h+=`<div class="chain-result"><b>↳ Outcome:</b> ${esc(c.scenario.result)}</div>`;
+  }
+  return h || '<p>// chaining map coming soon.</p>';
+}
+function reportMarkdown(v,r){
+  const steps=Array.isArray(r.steps)?r.steps:[];
+  const rem=Array.isArray(r.remediation)?r.remediation:(r.remediation?[r.remediation]:[]);
+  let m=`# ${r.title||v.name}\n\n`;
+  m+=`**Severity:** ${r.severity||v.severity}`;
+  if(r.cvss) m+=`  \n**CVSS:** ${r.cvss}`;
+  if(v.cwe) m+=`  \n**CWE:** ${v.cwe}`;
+  m+=`\n\n`;
+  if(r.summary) m+=`## Summary\n${r.summary}\n\n`;
+  if(steps.length) m+=`## Steps to Reproduce\n`+steps.map((s,i)=>`${i+1}. ${s}`).join('\n')+`\n\n`;
+  if(r.impact) m+=`## Impact\n${r.impact}\n\n`;
+  if(rem.length) m+=`## Remediation\n`+rem.map(x=>`- ${x}`).join('\n')+`\n`;
+  return m;
+}
+function renderReport(v){
+  const r = v.report;
+  if(!r || typeof r!=='object') return '<p>// vulnerability-report template is being added for this class.</p>';
+  const steps=Array.isArray(r.steps)?r.steps:[];
+  const rem=Array.isArray(r.remediation)?r.remediation:(r.remediation?[r.remediation]:[]);
+  const sev=r.severity||v.severity;
+  let h=`<p class="rep-intro">A ready-to-adapt write-up for this finding — the same skeleton a triager expects in a bug-bounty or pentest report. Fill the brackets with your target's specifics.</p>`;
+  h+=`<div class="report-card">`;
+  h+=`<div class="rep-row"><span class="rep-k">Title</span><span class="rep-v">${esc(r.title||v.name)}</span></div>`;
+  h+=`<div class="rep-row"><span class="rep-k">Severity</span><span class="rep-v"><span class="sev sev-${esc(sev)}">${esc(sev)}</span>${r.cvss?`<span class="rep-cvss">${esc(r.cvss)}</span>`:''}${v.cwe?`<span class="rep-cwe">${esc(v.cwe)}</span>`:''}</span></div>`;
+  if(r.summary) h+=`<div class="rep-sec"><div class="rep-h">① Summary</div><p>${esc(r.summary)}</p></div>`;
+  if(steps.length) h+=`<div class="rep-sec"><div class="rep-h">② Steps to reproduce / PoC</div><ol class="steps">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`;
+  if(r.impact) h+=`<div class="rep-sec"><div class="rep-h">③ Business impact</div><p>${esc(r.impact)}</p></div>`;
+  if(rem.length) h+=`<div class="rep-sec"><div class="rep-h">④ Remediation</div><ul class="bullets">${rem.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  h+=`</div>`;
+  h+=`<div class="rep-copy"><button class="copy">⧉ copy full report as Markdown</button><pre class="rep-md">${esc(reportMarkdown(v,r))}</pre></div>`;
+  return h;
+}
+function activateTab(root, key, focusIt){
+  $$('.tab',root).forEach(t=>{ const on=t.dataset.tab===key;
+    t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); t.tabIndex=on?0:-1;
+    if(on&&focusIt) t.focus();
+  });
+  $$('.panel',root).forEach(p=>p.classList.toggle('on',p.dataset.panel===key));
+}
+function renderDetail(slug, tab){
   const v = VULNS.find(x=>x.slug===slug);
   const root = $('#view-detail');
   if(!v){ root.innerHTML='<p class="empty">// dossier not found</p>'; return; }
@@ -247,7 +374,9 @@ function renderDetail(slug){
     {k:'lab',      t:'Lab Setup',  i:'⚒'},
     {k:'payloads', t:'Payloads',   i:'⟁'},
     {k:'bypass',   t:'WAF Bypass', i:'⛨'},
+    {k:'chain',    t:'Chaining',   i:'⛓'},
     {k:'ctf',      t:'CTF Lab',    i:'⚑'},
+    {k:'report',   t:'Write-Up',   i:'✍'},
     {k:'reports',  t:'Reports',    i:'❖'},
     {k:'tools',    t:'Tools',      i:'⚙'},
     {k:'refs',     t:'References', i:'⌖'},
@@ -265,15 +394,18 @@ function renderDetail(slug){
         <span class="card-id" style="margin-left:10px">#${String(v.id).padStart(3,'0')} · ${esc(v.category)}</span>
         <h1 class="detail-title">${esc(v.name)}</h1>
         <div class="detail-meta">
-          ${v.cwe?`<span class="tag">${esc(v.cwe)}</span>`:''}
-          ${(v.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
+          ${v.cwe?cweTag(v.cwe):''}
+          ${(v.tags||[]).map(t=>`<button class="tag tag-btn" data-tag="${esc(t)}" title="Filter the codex by #${esc(t)}">#${esc(t)}</button>`).join('')}
         </div>
       </div>
-      <button class="mark-done ${Store.has(v.id)?'on':''}" id="markdone">${Store.has(v.id)?'✓ Practiced':'◌ Mark Practiced'}</button>
+      <div class="detail-actions">
+        <button class="ghost-btn" id="export-md" title="Copy this whole dossier as Markdown">⧉ Export .md</button>
+        <button class="mark-done ${Store.has(v.id)?'on':''}" id="markdone">${Store.has(v.id)?'✓ Practiced':'◌ Mark Practiced'}</button>
+      </div>
     </div>
 
     <div class="detail-layout">
-      <div class="tabs">${tabs.map((tb,i)=>`<button class="tab ${i===0?'on':''}" data-tab="${tb.k}"><span class="ti">${tb.i}</span>${tb.t}</button>`).join('')}</div>
+      <div class="tabs" role="tablist" aria-label="Dossier sections">${tabs.map((tb,i)=>`<button class="tab ${i===0?'on':''}" data-tab="${tb.k}" role="tab" id="tab-${tb.k}" aria-controls="panel-${tb.k}" aria-selected="${i===0?'true':'false'}" tabindex="${i===0?'0':'-1'}"><span class="ti" aria-hidden="true">${tb.i}</span>${tb.t}</button>`).join('')}</div>
       <div class="panels">
 
         <div class="panel on" data-panel="overview">
@@ -298,6 +430,7 @@ function renderDetail(slug){
           <h3>Payloads &amp; probes</h3>
           ${(v.payloads&&v.payloads.length)? codeList(v.payloads) : '<p>No raw payloads for this class — see the Test A→Z and Bypass tabs.</p>'}
           ${apl.length? `<h4 class="sub">⌁ Annotated payloads — what each one does</h4>${apl.map(a=>`<div class="apl"><button class="copy">copy</button><code>${esc(a.p)}</code><div class="apl-c"># ${esc(a.c)}</div></div>`).join('')}`:''}
+          ${(v.encoding&&v.encoding.length)? `<h4 class="sub">⇄ Encode / Decode lab — filter-evasion ladder</h4><p class="enc-intro">Same payload, every wire-form. When a probe is blocked, walk these layers: the winning one is whose decoder runs <b>after</b> the WAF but <b>before</b> the sink. Each shows the encoded string to paste and how to decode it back.</p><div class="enc-list">${v.encoding.map(e=>`<div class="enc"><button class="copy">copy</button><code>${esc(e.sample)}</code><div class="enc-meta"><span class="enc-layer">${esc(e.layer)}</span></div><div class="enc-n"># ${esc(e.note)}</div></div>`).join('')}</div>`:''}
         </div>
 
         <div class="panel" data-panel="bypass">
@@ -305,9 +438,19 @@ function renderDetail(slug){
           ${(v.bypass&&v.bypass.length)? `<ul class="bullets">${v.bypass.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>` : '<p>No specific filter bypasses documented for this class.</p>'}
         </div>
 
+        <div class="panel" data-panel="chain">
+          <h3>Chaining — one attack into the next</h3>
+          ${renderChain(v)}
+        </div>
+
         <div class="panel" data-panel="ctf">
           <h3>CTF lab walkthrough</h3>
           ${renderCtf(ctf)}
+        </div>
+
+        <div class="panel" data-panel="report">
+          <h3>How to report it — vulnerability write-up</h3>
+          ${renderReport(v)}
         </div>
 
         <div class="panel" data-panel="reports">
@@ -340,9 +483,28 @@ function renderDetail(slug){
   $('#markdone').onclick = e=>{ Store.toggle(v.id); const on=Store.has(v.id);
     e.target.classList.toggle('on',on); e.target.textContent = on?'✓ Practiced':'◌ Mark Practiced';
     toast(on?'Marked as practiced ✓':'Unmarked'); };
-  $$('.tab',root).forEach(tb=>tb.onclick=()=>{
-    $$('.tab',root).forEach(x=>x.classList.remove('on')); tb.classList.add('on');
-    $$('.panel',root).forEach(p=>p.classList.toggle('on',p.dataset.panel===tb.dataset.tab));
+  // ARIA tabs: id/role/labels for panels, click + arrow-key nav, shareable deep-link
+  $$('.panel',root).forEach(p=>{ const k=p.dataset.panel; p.setAttribute('role','tabpanel'); p.id='panel-'+k; p.setAttribute('aria-labelledby','tab-'+k); p.tabIndex=0; });
+  const selHash = k => history.replaceState(null,'', '#/vuln/'+v.slug+'/'+k);
+  $$('.tab',root).forEach(tb=>tb.onclick=()=>{ activateTab(root, tb.dataset.tab); selHash(tb.dataset.tab); });
+  const tablist = $('.tabs',root);
+  tablist.addEventListener('keydown',e=>{
+    if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+    e.preventDefault();
+    const btns=$$('.tab',root); let i=btns.findIndex(b=>b.getAttribute('aria-selected')==='true'); if(i<0) i=0;
+    if(e.key==='Home') i=0; else if(e.key==='End') i=btns.length-1;
+    else if(e.key==='ArrowUp'||e.key==='ArrowLeft') i=(i-1+btns.length)%btns.length;
+    else i=(i+1)%btns.length;
+    activateTab(root, btns[i].dataset.tab, true); selHash(btns[i].dataset.tab);
+  });
+  // export full dossier as markdown
+  $('#export-md').onclick = ()=>{ navigator.clipboard?.writeText(dossierMarkdown(v)).then(()=>toast('Dossier copied as Markdown ✓')); };
+  // clickable tags → filter the codex
+  $$('.tag-btn',root).forEach(b=>b.onclick=()=>{
+    state.q=b.dataset.tag; state.sev='all'; state.cat='all'; state.unpracticed=false;
+    const fi=$('#filter-q'); if(fi) fi.value=state.q;
+    const ut=$('#toggle-unpracticed'); if(ut){ ut.setAttribute('aria-pressed','false'); ut.classList.remove('on'); ut.textContent='◌ Unpracticed'; }
+    location.hash='#/';
   });
   $$('.lvl',root).forEach(b=>b.onclick=()=>{
     $$('.lvl',root).forEach(x=>x.classList.remove('on')); b.classList.add('on');
@@ -351,6 +513,14 @@ function renderDetail(slug){
   $$('.copy',root).forEach(b=>b.onclick=()=>{
     navigator.clipboard?.writeText(b.nextElementSibling.textContent).then(()=>toast('Copied to clipboard'));
   });
+  // glass-3D tilt on the dossier objects
+  $$('.detail-head',root).forEach(e=>bindTilt(e,5));
+  $$('.report-card',root).forEach(e=>bindTilt(e,9));
+  $$('.chain-row',root).forEach(e=>bindTilt(e,7));
+  $$('.tool',root).forEach(e=>bindTilt(e,13));
+  $$('.ctf-win',root).forEach(e=>bindTilt(e,8));
+  // deep-link: open the requested tab (#/vuln/<slug>/<tab>)
+  if(tab && tabs.some(t=>t.k===tab)) activateTab(root, tab);
   scrollTo(0,0);
 }
 
@@ -361,7 +531,7 @@ function renderAbout(){
     <div class="back-link" onclick="location.hash='#/'">⟵ back to codex</div>
     <h1>Field Manual</h1>
     <p>VULNDEX is a study console for the <b>${VULNS.length}</b> web application vulnerabilities in the OWASP-style catalog.
-       Every entry is a dossier with the same seven sections so your testing workflow becomes muscle memory.</p>
+       Every entry is a dossier with the same nine core sections so your testing workflow becomes muscle memory.</p>
 
     <div class="callout legal"><span class="ci">⚠</span><p><b>Rules of engagement.</b> This material is for authorized penetration testing, CTF practice and education. Never run these techniques against systems you do not own or lack written permission to test. Unauthorized testing is illegal.</p></div>
 
@@ -373,6 +543,8 @@ function renderAbout(){
         <li><b>Lab Setup</b> — how to stand up a safe, reproducible practice target.</li>
         <li><b>Payloads</b> — copy-paste probes and exploit strings.</li>
         <li><b>WAF Bypass</b> — defeating filters, WAFs and weak blocklists.</li>
+        <li><b>Chaining</b> — what leads into this bug and where it pivots next; one worked end-to-end kill-chain.</li>
+        <li><b>Write-Up</b> — a ready-to-adapt vulnerability report: title, severity/CVSS, PoC steps, impact, remediation.</li>
         <li><b>Tools</b> — the standard kit for that class.</li>
         <li><b>References</b> — HackTricks, PortSwigger Academy, OWASP, A-to-Z repo.</li>
       </ul>
@@ -399,20 +571,89 @@ function renderAbout(){
       </ul>
     </div>
   </div>`;
+  $$('.about-card').forEach(e=>bindTilt(e,8));
+}
+
+/* ================= ATTACK CHAIN MAP ================= */
+const SEV_COLOR = {Critical:'#ff4d6d', High:'#ffb627', Medium:'#22e7ff', Low:'#b6ff3a'};
+function renderMap(){
+  const root = $('#view-map');
+  // order nodes by attack class so each class forms a contiguous arc
+  const catOrder=[]; VULNS.forEach(v=>{ if(!catOrder.includes(v.category)) catOrder.push(v.category); });
+  const nodes = VULNS.slice().sort((a,b)=> (catOrder.indexOf(a.category)-catOrder.indexOf(b.category)) || (a.id-b.id));
+  const N=nodes.length, cx=500, cy=500, R=350;
+  const pos={};
+  nodes.forEach((v,i)=>{ const ang=(i/N)*2*Math.PI - Math.PI/2; pos[v.slug]={x:cx+R*Math.cos(ang), y:cy+R*Math.sin(ang), ang}; });
+
+  // edges = documented pivots (this attack escalates into target)
+  const edges=[];
+  nodes.forEach(v=>{ (v.chain&&v.chain.pivots||[]).forEach(p=>{ if(p.slug&&pos[p.slug]) edges.push({a:v.slug,b:p.slug,sev:v.severity}); }); });
+  const neigh={};
+  edges.forEach(e=>{ (neigh[e.a]=neigh[e.a]||new Set()).add(e.b); (neigh[e.b]=neigh[e.b]||new Set()).add(e.a); });
+
+  const edgeEls = edges.map(e=>{ const A=pos[e.a], B=pos[e.b];
+    const mx=(A.x+B.x)/2, my=(A.y+B.y)/2, k=0.42; const px=cx+(mx-cx)*k, py=cy+(my-cy)*k;
+    return `<path class="map-edge" data-a="${e.a}" data-b="${e.b}" d="M${A.x.toFixed(1)} ${A.y.toFixed(1)} Q${px.toFixed(1)} ${py.toFixed(1)} ${B.x.toFixed(1)} ${B.y.toFixed(1)}" stroke="${SEV_COLOR[e.sev]||'#22e7ff'}"/>`;
+  }).join('');
+  const nodeEls = nodes.map(v=>{ const P=pos[v.slug];
+    return `<g class="map-node" data-slug="${v.slug}" tabindex="0" role="link" aria-label="${esc(v.name)}, ${esc(v.severity)}" transform="translate(${P.x.toFixed(1)},${P.y.toFixed(1)})"><circle class="mn-hit" r="13" fill="transparent"/><circle class="mn-dot" r="6.5" fill="${SEV_COLOR[v.severity]||'#22e7ff'}"/><title>${esc(v.name)} — ${esc(v.severity)} · ${esc(v.category)}</title></g>`;
+  }).join('');
+  const catEls = catOrder.map(cat=>{
+    const idxs=nodes.map((v,i)=>v.category===cat?i:-1).filter(i=>i>=0); if(!idxs.length) return '';
+    const mid=idxs[Math.floor(idxs.length/2)], ang=(mid/N)*2*Math.PI - Math.PI/2, lr=R+24;
+    const x=cx+lr*Math.cos(ang), y=cy+lr*Math.sin(ang), deg=ang*180/Math.PI, flip=Math.cos(ang)<0;
+    return `<text class="map-cat" x="${x.toFixed(1)}" y="${y.toFixed(1)}" transform="rotate(${(flip?deg+180:deg).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" text-anchor="${flip?'end':'start'}">${esc(cat)}</text>`;
+  }).join('');
+
+  root.innerHTML = `
+    <div class="map-wrap">
+      <div class="back-link" onclick="location.hash='#/'">⟵ back to codex</div>
+      <h1>Attack Chain Map</h1>
+      <p class="map-intro">All <b>${N}</b> vulnerabilities as nodes, ringed by attack class. Each curve is a documented <b>pivot</b> — one attack escalating into another (<b>${edges.length}</b> links). Hover or focus a node to light its chains; click to open the dossier.</p>
+      <div class="map-legend">${SEV.map(s=>`<span class="map-lg"><i style="background:${SEV_COLOR[s]}"></i>${s}</span>`).join('')}<span class="map-lg map-lg-sep">curve colour = source severity</span></div>
+      <div class="map-stage">
+        <svg viewBox="-170 -150 1340 1340" class="map-svg" role="img" aria-label="Interactive attack-chain map of all ${N} vulnerabilities and their ${edges.length} pivot links">
+          <g class="map-edges">${edgeEls}</g>
+          <g class="map-nodes">${nodeEls}</g>
+          <g class="map-cats">${catEls}</g>
+        </svg>
+      </div>
+      <div class="map-info" id="map-info" aria-live="polite">// hover or focus a node to inspect its chains</div>
+    </div>`;
+
+  const svg=$('.map-svg',root), info=$('#map-info',root);
+  const edgeNodes=$$('.map-edge',root), nodeGs=$$('.map-node',root);
+  function show(slug){
+    const v=VULNS.find(x=>x.slug===slug); if(!v) return;
+    const out=(v.chain&&v.chain.pivots||[]).length, inn=(v.chain&&v.chain.feeders||[]).length;
+    info.innerHTML=`<b>${esc(v.name)}</b> <span class="sev sev-${v.severity}">${v.severity}</span> · ${esc(v.category)} — pivots out: <b>${out}</b>, leads in: <b>${inn}</b>`;
+    edgeNodes.forEach(p=>{ const on=p.dataset.a===slug||p.dataset.b===slug; p.classList.toggle('hot',on); p.classList.toggle('dim',!on); });
+    nodeGs.forEach(g=>{ const s=g.dataset.slug; g.classList.toggle('faded', s!==slug && !(neigh[slug]&&neigh[slug].has(s))); });
+  }
+  function clear(){ info.innerHTML='// hover or focus a node to inspect its chains'; edgeNodes.forEach(p=>p.classList.remove('hot','dim')); nodeGs.forEach(g=>g.classList.remove('faded')); }
+  svg.addEventListener('mouseover',e=>{ const g=e.target.closest('.map-node'); if(g) show(g.dataset.slug); });
+  svg.addEventListener('mouseout',e=>{ if(!svg.contains(e.relatedTarget)) clear(); });
+  svg.addEventListener('focusin',e=>{ const g=e.target.closest('.map-node'); if(g) show(g.dataset.slug); });
+  svg.addEventListener('click',e=>{ const g=e.target.closest('.map-node'); if(g) location.hash='#/vuln/'+g.dataset.slug; });
+  svg.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ const g=e.target.closest('.map-node'); if(g){ e.preventDefault(); location.hash='#/vuln/'+g.dataset.slug; } } });
+  scrollTo(0,0);
 }
 
 /* ================= ROUTER ================= */
 function route(){
   const h = location.hash || '#/';
   const showHome  = h==='#/'||h==='';
-  const m = h.match(/^#\/vuln\/(.+)$/);
+  const m = h.match(/^#\/vuln\/([^/]+)(?:\/([a-z]+))?$/);
   const about = h==='#/about';
+  const map = h==='#/map';
   $('#view-home').hidden   = !showHome;
   $('#view-detail').hidden = !m;
+  $('#view-map').hidden    = !map;
   $('#view-about').hidden  = !about;
-  if(m) renderDetail(decodeURIComponent(m[1]));
+  if(m) renderDetail(decodeURIComponent(m[1]), m[2]);
+  else if(map) renderMap();
   else if(about) renderAbout();
-  else { renderGrid(); renderProgress(); renderStats(); }
+  else { renderChips(); renderCats(); renderGrid(); renderProgress(); renderStats(); }
 }
 
 /* ================= COMMAND PALETTE ================= */
@@ -420,10 +661,7 @@ const Palette = {
   open(){ const p=$('#palette'); p.hidden=false; $('#palette-q').value=''; this.render(''); $('#palette-q').focus(); },
   close(){ $('#palette').hidden=true; },
   render(q){
-    const list = !q ? VULNS.slice(0,8) : VULNS.filter(v=>{
-      const s=q.toLowerCase();
-      return [v.name,v.category,(v.tags||[]).join(' ')].join(' ').toLowerCase().includes(s);
-    }).slice(0,40);
+    const list = !q ? VULNS.slice(0,8) : VULNS.filter(v=>searchHay(v).includes(q.toLowerCase())).slice(0,40);
     $('#palette-results').innerHTML = list.map((v,i)=>`
       <li data-slug="${v.slug}" class="${i===0?'active':''}">
         <span class="pr-id">#${String(v.id).padStart(3,'0')}</span>
@@ -447,17 +685,26 @@ function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; cle
 
 /* ================= EVENTS ================= */
 function bindGlobal(){
-  $('#filter-q').addEventListener('input',e=>{ state.q=e.target.value.trim(); renderGrid(); });
-  $('#cta-explore').onclick=()=>$('#grid').scrollIntoView({behavior:'smooth'});
-  $('#open-search').onclick=()=>Palette.open();
-  $('#reset-progress').onclick=()=>{ if(confirm('Reset all practiced progress?')){ Store.reset(); route(); toast('Progress reset'); } };
+  // null-safe binder: a missing element (e.g. an older cached index.html) must
+  // never throw and abort init — it just skips that one binding.
+  const on=(sel,ev,fn)=>{ const el=$(sel); if(el) el.addEventListener(ev,fn); };
+  on('#filter-q','input',e=>{ state.q=e.target.value.trim(); renderGrid(); });
+  on('#cta-explore','click',()=>$('#grid')?.scrollIntoView({behavior:'smooth'}));
+  on('#open-search','click',()=>Palette.open());
+  on('#reset-progress','click',()=>{ if(confirm('Reset all practiced progress?')){ Store.reset(); route(); toast('Progress reset'); } });
+  on('#random-vuln','click',()=>{ const v=VULNS[Math.floor(Math.random()*VULNS.length)]; if(v) location.hash='#/vuln/'+v.slug; });
+  on('#toggle-unpracticed','click',e=>{ state.unpracticed=!state.unpracticed; const b=e.currentTarget;
+    b.setAttribute('aria-pressed', state.unpracticed); b.classList.toggle('on', state.unpracticed);
+    b.textContent = state.unpracticed?'● Unpracticed':'◌ Unpracticed';
+    if(location.hash && location.hash!=='#/') location.hash='#/'; else renderGrid(); });
 
-  $('#palette-q').addEventListener('input',e=>Palette.render(e.target.value.trim()));
-  $('#palette').addEventListener('click',e=>{ if(e.target.id==='palette') Palette.close(); });
+  on('#palette-q','input',e=>Palette.render(e.target.value.trim()));
+  on('#palette','click',e=>{ if(e.target.id==='palette') Palette.close(); });
 
   addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); $('#palette').hidden?Palette.open():Palette.close(); }
-    if(!$('#palette').hidden){
+    const pal=$('#palette');
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(pal) (pal.hidden?Palette.open():Palette.close()); }
+    if(pal && !pal.hidden){
       if(e.key==='Escape') Palette.close();
       if(e.key==='ArrowDown'){ e.preventDefault(); Palette.nav(1); }
       if(e.key==='ArrowUp'){ e.preventDefault(); Palette.nav(-1); }
@@ -471,9 +718,18 @@ function bindGlobal(){
 /* ================= INIT ================= */
 function init(){
   if(!VULNS.length){
-    $('#grid').innerHTML='<p class="empty">// vulnerability data not loaded — assets/js/vulns.js missing</p>';
+    const g=$('#grid'); if(g) g.innerHTML='<p class="empty">// vulnerability data not loaded — assets/js/vulns.js missing</p>';
   }
-  boot(); matrix(); renderStats(); renderChips(); renderCats(); renderProgress(); bindGlobal(); route();
+  // Each step isolated: one failure must not stop the grid from rendering.
+  try{ boot(); }catch(e){ console.error('boot',e); }
+  try{ matrix(); }catch(e){ console.error('matrix',e); }
+  try{ renderStats(); }catch(e){ console.error('stats',e); }
+  route();                       // render current view (grid) FIRST — always shows
+  try{ bindGlobal(); }catch(e){ console.error('bindGlobal',e); }
+  // PWA: register service worker for offline use (http/https only — not file://)
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
 }
 document.readyState==='loading'?addEventListener('DOMContentLoaded',init):init();
 

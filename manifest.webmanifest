@@ -1,0 +1,20 @@
+{
+  "name": "VULNDEX — A→Z Web Attack Lab",
+  "short_name": "VULNDEX",
+  "description": "121 web application vulnerabilities, each a full attack dossier: test methodology, payloads, WAF bypass, chaining and report write-ups. Authorized security testing & education.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05060c",
+  "theme_color": "#05060c",
+  "categories": ["education", "security", "developer", "reference"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23070a14'/%3E%3Ctext y='.92em' x='9' font-size='78'%3E%E2%98%A3%EF%B8%8F%3C/text%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

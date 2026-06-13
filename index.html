@@ -3,15 +3,33 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="VULNDEX — A-to-Z Web Application Attack Lab. 121 web vulnerabilities with full testing methodology, lab setup, WAF bypass, tools and references." />
+<meta name="description" content="VULNDEX — A-to-Z Web Application Attack Lab. 121 web vulnerabilities, each a full dossier: graded test methodology, lab setup, payloads, WAF bypass, attack chaining, report write-up, tools and references. For authorized pentesting, CTFs and education." />
+<meta name="theme-color" content="#05060c" />
+<meta name="color-scheme" content="dark" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="VULNDEX" />
+<!-- Open Graph / social -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="VULNDEX // A→Z Web Attack Lab" />
+<meta property="og:description" content="121 web application vulnerabilities — full testing methodology, payloads, WAF bypass, attack chaining and report write-ups. Authorized security testing & education." />
+<meta property="og:site_name" content="VULNDEX" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="VULNDEX // A→Z Web Attack Lab" />
+<meta name="twitter:description" content="121 web vulnerabilities, each a full attack dossier. Authorized security testing & education." />
 <title>VULNDEX // A→Z Web Attack Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css" />
+<link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%A3%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23070a14'/%3E%3Ctext y='.92em' x='9' font-size='78'%3E%E2%98%A3%EF%B8%8F%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
+
+<a class="skip-link" href="#app">Skip to content</a>
 
 <!-- animated backdrop layers -->
 <canvas id="matrix" aria-hidden="true"></canvas>
@@ -39,6 +57,7 @@
     <button id="open-search" class="cmd-btn" title="Search (Ctrl+K)">
       <span class="cmd-ico">⌕</span><span>Search</span><kbd>Ctrl K</kbd>
     </button>
+    <a class="ghost-btn" href="#/map">⛓ Attack Map</a>
     <a class="ghost-btn" href="#/about">Field Manual</a>
     <button id="reset-progress" class="ghost-btn danger" title="Reset practiced progress">Reset</button>
   </div>
@@ -67,7 +86,8 @@
         <p class="hero-desc">
           <b id="stat-total">121</b> web application vulnerabilities. Each one a full dossier:
           <span class="hl">how to test A→Z</span>, <span class="hl">lab setup</span>,
-          <span class="hl">WAF / filter bypass</span>, <span class="hl">payloads</span>,
+          <span class="hl">payloads</span>, <span class="hl">WAF / filter bypass</span>,
+          <span class="hl">attack chaining</span>, <span class="hl">report write-up</span>,
           <span class="hl">tools</span> and <span class="hl">references</span>.
         </p>
         <div class="hero-actions">
@@ -81,9 +101,11 @@
     <div class="controls">
       <div class="search-inline">
         <span>⌕</span>
-        <input id="filter-q" type="text" placeholder="filter vulnerabilities…" autocomplete="off" spellcheck="false" />
+        <input id="filter-q" type="text" placeholder="search vuln, payload, chain, tool…" autocomplete="off" spellcheck="false" aria-label="Search vulnerabilities" />
       </div>
       <div class="chip-row" id="severity-chips"></div>
+      <button id="toggle-unpracticed" class="ghost-btn" aria-pressed="false" title="Show only vulns you haven't practiced">◌ Unpracticed</button>
+      <button id="random-vuln" class="ghost-btn" title="Open a random vulnerability">⚄ Random</button>
     </div>
 
     <nav class="cat-rail" id="cat-rail"></nav>
@@ -99,6 +121,9 @@
 
   <!-- ============ DETAIL / DOSSIER VIEW ============ -->
   <section id="view-detail" class="view" hidden></section>
+
+  <!-- ============ ATTACK MAP VIEW ============ -->
+  <section id="view-map" class="view" hidden></section>
 
   <!-- ============ ABOUT VIEW ============ -->
   <section id="view-about" class="view" hidden></section>
@@ -118,7 +143,7 @@
 <!-- toast -->
 <div id="toast" class="toast" hidden></div>
 
-<script src="assets/js/vulns.js"></script>
-<script src="assets/js/app.js"></script>
+<script defer src="assets/js/vulns.js"></script>
+<script defer src="assets/js/app.js"></script>
 </body>
 </html>

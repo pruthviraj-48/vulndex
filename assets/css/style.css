@@ -191,10 +191,10 @@ kbd{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.06);bord
 /* ---------- grid ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:18px}
 .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-  padding:20px;cursor:pointer;overflow:hidden;backdrop-filter:blur(8px);
+  padding:20px;cursor:pointer;overflow:hidden;
   --rx:0deg;--ry:0deg;--mx:50%;--my:50%;
   transform:perspective(820px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition:transform .14s ease,border-color .2s,box-shadow .25s;will-change:transform}
+  transition:transform .14s ease,border-color .2s,box-shadow .25s}
 .card::after{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;pointer-events:none;z-index:3;
   background:linear-gradient(130deg,transparent 35%,rgba(34,231,255,.6),rgba(255,43,214,.6));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:.25s}
@@ -262,6 +262,15 @@ kbd{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.06);bord
 .steps .step-act{display:block;color:var(--txt)}
 .steps .step-desc{display:block;margin-top:6px;font-family:var(--mono);font-size:12px;line-height:1.55;
   color:var(--cyan);opacity:.85;padding-left:12px;border-left:2px solid rgba(34,231,255,.3)}
+.steps .step-how{display:block;margin-top:8px;padding:8px 10px;background:rgba(182,255,58,.045);
+  border:1px solid rgba(182,255,58,.18);border-radius:7px;font-family:var(--mono);font-size:11.5px;line-height:1.5}
+.step-how .sh-lead{display:block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--lime);opacity:.85;margin-bottom:5px}
+.step-how .sh-t{display:inline-block;color:var(--bg);background:var(--lime);font-weight:700;
+  padding:1px 7px;border-radius:5px;margin:0 6px 4px 0;font-size:10.5px}
+.step-how .sh-m{color:var(--txt-dim);display:inline}
+.step-how .sh-c{display:block;margin-top:6px;color:var(--lime);background:#070a14;
+  border:1px solid var(--line);border-radius:5px;padding:6px 8px;overflow-wrap:anywhere;white-space:pre-wrap}
 
 .codeblock{position:relative;background:#070a14;border:1px solid var(--line-2);border-radius:var(--radius-s);
   margin:10px 0;overflow:hidden}
@@ -295,6 +304,23 @@ h4.sub{font-family:var(--head);font-size:15px;color:var(--txt);margin:24px 0 12p
 .apl .copy{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;cursor:pointer;
   background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--txt-dim);padding:4px 9px;border-radius:6px}
 .apl .copy:hover{color:var(--cyan);border-color:var(--cyan)}
+
+/* encode / decode lab */
+.enc-intro{font-size:12.5px;color:var(--txt-dim);line-height:1.6;margin:2px 0 12px}
+.enc-list{display:flex;flex-direction:column;gap:9px}
+.enc{position:relative;background:#070a14;border:1px solid var(--line);border-left:2px solid var(--cyan);
+  border-radius:var(--radius-s);padding:12px 14px}
+.enc code{display:block;font-family:var(--mono);font-size:12.5px;color:var(--lime);
+  word-break:break-all;line-height:1.5;padding-right:54px}
+.enc-meta{margin-top:7px}
+.enc-layer{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--bg);background:var(--cyan);padding:2px 8px;border-radius:5px;font-weight:700}
+.enc-n{font-family:var(--mono);font-size:11.5px;color:var(--txt-dim);margin-top:7px;line-height:1.55}
+.enc .copy{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;cursor:pointer;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--txt-dim);padding:4px 9px;border-radius:6px}
+.enc .copy:hover{color:var(--cyan);border-color:var(--cyan)}
+.enc,.enc-top code{min-width:0;max-width:100%}
+.enc code{overflow-wrap:anywhere}
 
 /* ---- overflow safety: wrap long tokens (payloads, URLs) so nothing escapes the layout ---- */
 .panel p,.panel li,.steps li,.steps .step-act,.steps .step-desc,.bullets li,.tool .td,.tool .tn,
@@ -439,8 +465,172 @@ h4.sub{font-family:var(--head);font-size:15px;color:var(--txt);margin:24px 0 12p
   .lvl-n{font-size:9px}
 }
 
+/* ===== Chaining tab ===== */
+.chain-list{display:flex;flex-direction:column;gap:12px;margin:0 0 8px}
+.chain-row{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-s);padding:13px 15px}
+.chain-in{border-left:3px solid var(--violet)}
+.chain-out{border-left:3px solid var(--magenta)}
+.chain-flow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:7px}
+.chain-node{font-family:var(--mono);font-size:12.5px;padding:5px 11px;border-radius:30px;border:1px solid var(--line-2);white-space:nowrap}
+.chain-cur{color:var(--cyan);border-color:rgba(34,231,255,.4);background:rgba(34,231,255,.08)}
+.chain-src{color:var(--violet);border-color:rgba(154,107,255,.4);background:rgba(154,107,255,.08)}
+.chain-dst{color:var(--magenta);border-color:rgba(255,43,214,.4);background:rgba(255,43,214,.08)}
+.chain-link{color:inherit;text-decoration:none}
+.chain-link:hover{text-decoration:underline}
+.chain-arrow{color:var(--txt-faint);font-size:16px}
+.chain-how{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--txt-dim);padding-left:2px}
+.chain-gain{color:var(--lime);font-weight:600}
+.chain-steps{margin-top:6px}
+.chain-result{margin-top:14px;padding:13px 16px;border:1px solid rgba(34,231,255,.3);border-radius:var(--radius-s);
+  background:linear-gradient(120deg,rgba(34,231,255,.07),#070a14);font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--txt)}
+.chain-result b{color:var(--cyan)}
+
+/* ===== Write-Up (report) tab ===== */
+.rep-intro{color:var(--txt-dim);line-height:1.7}
+.report-card{background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius-s);padding:6px 18px 18px;margin:14px 0}
+.rep-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.rep-k{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-faint);min-width:74px}
+.rep-v{color:var(--txt);font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rep-cvss,.rep-cwe{font-family:var(--mono);font-size:11px;color:var(--txt-dim);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-weight:400}
+.rep-sec{padding:16px 0 4px;border-bottom:1px dashed var(--line)}
+.rep-sec:last-child{border-bottom:none}
+.rep-h{font-family:var(--head);font-size:14px;color:var(--cyan);margin-bottom:9px;letter-spacing:.5px}
+.rep-sec p{color:var(--txt-dim);line-height:1.7;margin:0}
+.rep-copy{position:relative}
+.rep-copy .copy{font-family:var(--mono);font-size:11px;cursor:pointer;background:rgba(34,231,255,.08);
+  border:1px solid var(--line-2);color:var(--cyan);padding:9px 14px;border-radius:8px}
+.rep-copy .copy:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.rep-md{display:none}
+
+/* ============================================================
+   GLASS 3D — heavy depth pass (frosted objects + cursor tilt)
+   ============================================================ */
+:root{
+  --glass:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 58%);
+  --glass-edge:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(140,180,255,.05);
+  --glass-depth:0 26px 60px -22px rgba(0,0,0,.82),0 10px 26px -14px rgba(0,0,0,.6);
+  --glass-blur:blur(14px) saturate(150%);
+}
+
+/* perspective stages so children float in real depth */
+.grid,.hero-stats{perspective:1400px;perspective-origin:50% 30%}
+.detail-layout{perspective:1700px}
+.about-wrap{perspective:1700px}
+
+/* PERF: backdrop-filter is GPU-expensive — only on the FEW large panels,
+   never on the 121-card grid or other high-count elements. */
+.hstat,.report-card,.about-card,.ctf-win,.detail-head,.palette-box,.notes,
+.search-inline,.cmd-btn{
+  background:var(--glass),rgba(13,17,30,.5);
+  backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(150,185,255,.16);
+  box-shadow:var(--glass-edge),0 14px 34px -20px rgba(0,0,0,.7);
+}
+/* same glass LOOK, no blur — for cards (×121) + high-count bits (cheap) */
+.card,.chain-row,.tool,.codeblock,.steps li,.chip,.cat-pill,.tab.on,.ref,.apl,.ctf-scn{
+  background:var(--glass),rgba(11,15,27,.78);
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  border:1px solid rgba(150,185,255,.16);
+  box-shadow:var(--glass-edge),0 14px 34px -20px rgba(0,0,0,.7);
+}
+
+/* the big tilting glass OBJECTS */
+.hstat,.report-card,.chain-row,.about-card,.tool,.ctf-win,.detail-head{
+  --rx:0deg;--ry:0deg;--mx:50%;--my:50%;
+  position:relative;overflow:hidden;transform-style:preserve-3d;
+  transform:perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition:transform .16s ease,box-shadow .28s,border-color .28s;
+  will-change:transform;
+}
+.hstat:hover,.report-card:hover,.chain-row:hover,.about-card:hover,.tool:hover,.ctf-win:hover,.detail-head:hover{
+  transform:perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(28px);
+  border-color:rgba(34,231,255,.5);
+  box-shadow:var(--glass-edge),0 44px 86px -24px rgba(0,0,0,.88),0 0 44px rgba(34,231,255,.16);
+}
+/* cursor-tracked specular glare on each object */
+.report-card::after,.chain-row::after,.about-card::after,.tool::after,.ctf-win::after,.detail-head::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:radial-gradient(440px circle at var(--mx) var(--my),rgba(255,255,255,.17),transparent 46%);
+  opacity:0;transition:opacity .25s;
+}
+.report-card:hover::after,.chain-row:hover::after,.about-card:hover::after,.tool:hover::after,.ctf-win:hover::after,.detail-head:hover::after{opacity:1}
+.report-card>*,.chain-row>*,.about-card>*,.tool>*,.ctf-win>*,.detail-head>*{position:relative;z-index:2}
+/* hstat already owns a ::before glare — strengthen + cursor-track it */
+.hstat::before{background:radial-gradient(420px circle at var(--mx) var(--my),rgba(34,231,255,.16),transparent 46%)!important}
+
+/* let the level/tab glass read a touch brighter on the frosted bg */
+.tab.on{box-shadow:var(--glass-edge),var(--glow-cyan)}
+.report-card{padding:6px 20px 20px}
+
+@media(max-width:680px){
+  /* on small screens keep depth shadows but ease the blur for perf */
+  :root{--glass-blur:blur(13px) saturate(140%)}
+}
+
+/* ============================================================
+   A11Y + FEATURES + ATTACK MAP
+   ============================================================ */
+:root{--txt-dim:#9aa7cb}  /* nudged for AA contrast on glass */
+
+/* skip link */
+.skip-link{position:fixed;top:-60px;left:12px;z-index:400;background:var(--cyan);color:#04050a;
+  font-family:var(--mono);font-weight:700;font-size:13px;padding:10px 16px;border-radius:8px;transition:top .15s}
+.skip-link:focus{top:12px;outline:none}
+
+/* visible keyboard focus everywhere */
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible,.card:focus-visible{
+  outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+.tab:focus-visible{outline-offset:-2px}
+
+/* cards are now <a> */
+a.card{display:block;text-decoration:none;color:inherit}
+
+/* detail header actions + clickable tags + CWE link */
+.detail-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tag-btn{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:30px;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--txt-dim);transition:.15s}
+.tag-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+a.tag-cwe{color:var(--txt-dim)}
+a.tag-cwe:hover{color:var(--cyan);border-color:var(--cyan);text-decoration:none}
+.ghost-btn.on{color:#04050a;background:var(--cyan);border-color:var(--cyan);font-weight:700}
+
+/* ---------- attack chain map ---------- */
+.map-wrap{max-width:1000px;margin:0 auto;padding-top:10px}
+.map-wrap h1{font-family:var(--head);font-size:clamp(26px,4vw,40px);color:#fff;margin:6px 0 10px}
+.map-intro{color:var(--txt-dim);line-height:1.7;max-width:70ch}
+.map-intro b{color:var(--txt)}
+.map-legend{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0 6px;font-family:var(--mono);font-size:12px;color:var(--txt-dim)}
+.map-lg{display:inline-flex;align-items:center}
+.map-lg i{width:11px;height:11px;border-radius:3px;margin-right:6px;display:inline-block}
+.map-lg-sep{color:var(--txt-faint);border-left:1px solid var(--line);padding-left:16px}
+.map-stage{max-width:880px;margin:6px auto 0}
+.map-svg{width:100%;height:auto;overflow:visible;display:block}
+.map-edge{fill:none;stroke-width:1.1;opacity:.16;transition:opacity .18s,stroke-width .18s}
+.map-edge.hot{opacity:.95;stroke-width:2.2}
+.map-edge.dim{opacity:.035}
+.map-node{cursor:pointer;transition:opacity .18s;outline:none}
+.map-node .mn-hit{pointer-events:all}
+.mn-dot{transition:r .15s,stroke-width .15s;stroke:rgba(5,6,12,.6);stroke-width:1}
+.map-node:hover .mn-dot,.map-node:focus-visible .mn-dot{r:9.5;stroke:#fff;stroke-width:2}
+.map-node.faded{opacity:.16}
+.map-cat{font-family:var(--mono);font-size:12px;fill:var(--txt-faint);letter-spacing:.3px}
+.map-info{margin:18px auto 0;max-width:860px;font-family:var(--mono);font-size:13px;color:var(--txt-dim);
+  background:var(--glass),rgba(13,17,30,.5);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(150,185,255,.16);border-radius:var(--radius-s);padding:13px 16px;min-height:46px;
+  box-shadow:var(--glass-edge),0 14px 34px -20px rgba(0,0,0,.7)}
+.map-info .sev{margin:0 4px}
+@media(max-width:680px){ .map-cat{font-size:14px} }
+
+@media print{
+  #matrix,.aurora,.grid-overlay,.scanlines,.noise,.topbar,.footer,.tabs,.toast,.detail-actions,.skip-link{display:none!important}
+  body{background:#fff;color:#000}
+  .panel{display:block!important;page-break-inside:avoid}
+  .panel:not(.on){display:block!important}
+  *{backdrop-filter:none!important;box-shadow:none!important;transform:none!important;color:#111!important}
+}
+
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   #matrix,.aurora{display:none}
-  .card,.hstat{transform:none!important}
+  .card,.hstat,.report-card,.chain-row,.about-card,.tool,.ctf-win,.detail-head{transform:none!important}
 }

@@ -1,15 +1,19 @@
 # VULNDEX — A→Z Web Attack Lab
 
 A self-contained, offline-capable study console for **121 web application vulnerabilities**.
-Each vulnerability is a full dossier with the same 7 sections so your testing workflow becomes muscle memory:
+Each vulnerability is a full dossier with the same core sections so your testing workflow becomes muscle memory:
 
 - **Overview** — what it is + impact
 - **Test A→Z** — graded methodology in three tiers: **Beginner** (recon & detection) → **Intermediate** (exploitation) → **Advanced** (chaining, automation & WAF/filter bypass)
 - **Lab Setup** — how to stand up a safe practice target (PortSwigger labs, DVWA, Juice Shop, docker)
 - **Payloads** — copy-paste probes & exploit strings
 - **WAF Bypass** — defeating filters, WAFs, weak blocklists, rate limits
+- **Chaining** — what bug leads *into* this one, where it pivots *next*, and one worked end-to-end kill-chain (with links to the chained dossiers)
+- **Write-Up** — a ready-to-adapt vulnerability report: title, severity/CVSS, PoC steps, business impact, remediation — copyable as Markdown
 - **Tools** — the standard kit per class
 - **References** — HackTricks, PortSwigger Academy, OWASP, A-to-Z repo, CWE
+
+Plus a **CTF Lab** walkthrough and a **Reports** tab of real-world disclosed CVEs/bounty write-ups per class.
 
 > ⚠️ **Authorized use only.** For pentesting engagements, CTFs and education. Never run these against
 > systems you do not own or lack written permission to test.
