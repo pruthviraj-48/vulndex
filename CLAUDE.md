@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**VULNDEX** — a self-contained, offline-capable study console covering **121 web
+**VULNDEX** — a self-contained, offline-capable study console covering **133 web
 application vulnerabilities**. Each vulnerability is a dossier with the same core
 sections so the testing workflow becomes muscle memory:
 
@@ -31,7 +31,7 @@ HTML + CSS + vanilla JS.
 index.html              markup + view shells (home grid / dossier / map / about)
 assets/css/style.css    cyber-noir holographic theme + glass-3D + a11y/map layer
 assets/js/app.js        engine — hash router, search, render, progress, attack map (~40K)
-assets/js/vulns.js      data — window.VULNS = [...121 dossiers...] (~5.4M, single line)
+assets/js/vulns.js      data — window.VULNS = [...133 dossiers...] (~7.4M, single line)
 manifest.webmanifest    PWA manifest (installable, standalone)
 sw.js                   service worker — offline app-shell + runtime font cache
 .nojekyll               disables Jekyll on GitHub Pages
@@ -45,7 +45,7 @@ Key design points:
 - **Hash-routed** SPA: `#/` home, `#/vuln/<slug>` dossier, `#/vuln/<slug>/<tab>`
   deep-link (opens that tab; tab clicks update the hash via `replaceState`),
   `#/map` attack-chain map, `#/about` field manual.
-- **Attack Chain Map** (`#/map`, `renderMap()`) — SVG chord diagram of all 121
+- **Attack Chain Map** (`#/map`, `renderMap()`) — SVG chord diagram of all 133
   nodes (severity-coloured) ringed by attack class, with `chain.pivots` drawn as
   curves; hover/focus lights a node's chains, click opens the dossier.
 - **PWA / offline** — `sw.js` cache-first app shell + stale-while-revalidate
@@ -74,7 +74,7 @@ Key design points:
 
 ## Current status
 
-- **Type:** static site, complete. 121/121 vuln dossiers present in `vulns.js`.
+- **Type:** static site, complete. 133/133 vuln dossiers present in `vulns.js` (121 from the source list + 12 added for OWASP/PortSwigger/HackTricks coverage gaps: SSI, ESI, CSV/Formula, SSPP, postMessage, CSS injection, reverse tabnabbing, XSSI, web cache deception, padding oracle, ReDoS, directory listing).
 - **Hosting:** GitHub Pages — **LIVE**.
   - Live URL: https://pruthviraj-48.github.io/vulndex/
   - Repo: https://github.com/pruthviraj-48/vulndex (`origin`)
