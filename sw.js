@@ -1,6 +1,6 @@
 /* VULNDEX service worker — offline app shell + runtime font cache.
    Bump CACHE on any asset change to invalidate. */
-const CACHE = 'vulndex-v4';
+const CACHE = 'vulndex-v7';
 const SHELL = [
   './',
   './index.html',

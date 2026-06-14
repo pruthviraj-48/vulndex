@@ -1,6 +1,6 @@
 # VULNDEX — A→Z Web Attack Lab
 
-A self-contained, offline-capable study console for **133 web application vulnerabilities**.
+A self-contained, offline-capable study console for **139 web application vulnerabilities**.
 Each vulnerability is a full dossier with the same core sections so your testing workflow becomes muscle memory:
 
 - **Overview** — what it is + impact
@@ -50,7 +50,7 @@ python3 -m http.server 8099
 index.html            markup + view shells
 assets/css/style.css  theme
 assets/js/app.js       engine (router, search, render, progress)
-assets/js/vulns.js     data — window.VULNS = [...133 dossiers...]
+assets/js/vulns.js     data — window.VULNS = [...139 dossiers...]
 ```
 
 Data is embedded as a JS global (not fetched) so it works from `file://` with no CORS issues.

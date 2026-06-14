@@ -1,7 +1,7 @@
 {
   "name": "VULNDEX — A→Z Web Attack Lab",
   "short_name": "VULNDEX",
-  "description": "133 web application vulnerabilities, each a full attack dossier: test methodology, payloads, WAF bypass, chaining and report write-ups. Authorized security testing & education.",
+  "description": "139 web application vulnerabilities, each a full attack dossier: test methodology, payloads, WAF bypass, chaining and report write-ups. Authorized security testing & education.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

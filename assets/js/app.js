@@ -72,6 +72,7 @@ function boot(){
 /* ================= MATRIX BG ================= */
 function matrix(){
   const cv = $('#matrix'); if(!cv) return;
+  if(getComputedStyle(cv).display==='none') return;   // backdrop fx disabled in the flat theme
   if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   const ctx = cv.getContext('2d');
   let w,h,cols,drops;
@@ -82,11 +83,11 @@ function matrix(){
   (function draw(){
     t++;
     if(t%2===0){
-      ctx.fillStyle='rgba(5,6,12,.14)'; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='rgba(8,8,10,.16)'; ctx.fillRect(0,0,w,h);
       ctx.font='14px JetBrains Mono';
       for(let i=0;i<cols;i++){
         const ch = glyphs[Math.floor(Math.random()*glyphs.length)];
-        ctx.fillStyle = Math.random()>.985 ? '#ff2bd6' : '#22e7ff';
+        ctx.fillStyle = Math.random()>.985 ? '#e11d2a' : '#33333a';
         ctx.fillText(ch, i*16, drops[i]*16);
         if(drops[i]*16>h && Math.random()>.975) drops[i]=0;
         drops[i]++;
@@ -167,33 +168,9 @@ function renderGrid(){
   $$('.card',grid).forEach(c=>bindTilt(c,9));
 }
 
-/* ================= 3D TILT ================= */
+/* ================= TILT (disabled — flat professional UI) ================= */
 const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
-function bindTilt(el, max){
-  if(REDUCED) return;
-  const m = max||10; let rect=null, raf=0, cx=0, cy=0;
-  el.addEventListener('pointerenter', ()=>{ rect=el.getBoundingClientRect(); });
-  el.addEventListener('pointermove', e=>{
-    cx=e.clientX; cy=e.clientY;
-    if(raf) return;                              // throttle to one write per frame
-    raf=requestAnimationFrame(()=>{
-      raf=0; if(!rect) rect=el.getBoundingClientRect();
-      const px=(cx-rect.left)/rect.width - .5;
-      const py=(cy-rect.top)/rect.height - .5;
-      const s=el.style;
-      s.setProperty('--rx',(py*-m).toFixed(2)+'deg');
-      s.setProperty('--ry',(px*m*1.15).toFixed(2)+'deg');
-      s.setProperty('--mx',(px*100+50).toFixed(1)+'%');
-      s.setProperty('--my',(py*100+50).toFixed(1)+'%');
-    });
-  });
-  el.addEventListener('pointerleave', ()=>{
-    rect=null; if(raf){ cancelAnimationFrame(raf); raf=0; }
-    const s=el.style;
-    s.setProperty('--rx','0deg'); s.setProperty('--ry','0deg');
-    s.setProperty('--mx','50%'); s.setProperty('--my','50%');
-  });
-}
+function bindTilt(){ /* no-op: 3D cursor tilt removed for a flat, professional look */ }
 
 /* ================= LEVELED METHODOLOGY ================= */
 // uses v.levels {beginner,intermediate,advanced} when present; otherwise derives
@@ -575,7 +552,7 @@ function renderAbout(){
 }
 
 /* ================= ATTACK CHAIN MAP ================= */
-const SEV_COLOR = {Critical:'#ff4d6d', High:'#ffb627', Medium:'#22e7ff', Low:'#b6ff3a'};
+const SEV_COLOR = {Critical:'#ff3b4e', High:'#d23b46', Medium:'#c9c9d0', Low:'#76767e'};
 function renderMap(){
   const root = $('#view-map');
   // order nodes by attack class so each class forms a contiguous arc
@@ -593,10 +570,10 @@ function renderMap(){
 
   const edgeEls = edges.map(e=>{ const A=pos[e.a], B=pos[e.b];
     const mx=(A.x+B.x)/2, my=(A.y+B.y)/2, k=0.42; const px=cx+(mx-cx)*k, py=cy+(my-cy)*k;
-    return `<path class="map-edge" data-a="${e.a}" data-b="${e.b}" d="M${A.x.toFixed(1)} ${A.y.toFixed(1)} Q${px.toFixed(1)} ${py.toFixed(1)} ${B.x.toFixed(1)} ${B.y.toFixed(1)}" stroke="${SEV_COLOR[e.sev]||'#22e7ff'}"/>`;
+    return `<path class="map-edge" data-a="${e.a}" data-b="${e.b}" d="M${A.x.toFixed(1)} ${A.y.toFixed(1)} Q${px.toFixed(1)} ${py.toFixed(1)} ${B.x.toFixed(1)} ${B.y.toFixed(1)}" stroke="${SEV_COLOR[e.sev]|| '#e11d2a'}"/>`;
   }).join('');
   const nodeEls = nodes.map(v=>{ const P=pos[v.slug];
-    return `<g class="map-node" data-slug="${v.slug}" tabindex="0" role="link" aria-label="${esc(v.name)}, ${esc(v.severity)}" transform="translate(${P.x.toFixed(1)},${P.y.toFixed(1)})"><circle class="mn-hit" r="13" fill="transparent"/><circle class="mn-dot" r="6.5" fill="${SEV_COLOR[v.severity]||'#22e7ff'}"/><title>${esc(v.name)} — ${esc(v.severity)} · ${esc(v.category)}</title></g>`;
+    return `<g class="map-node" data-slug="${v.slug}" tabindex="0" role="link" aria-label="${esc(v.name)}, ${esc(v.severity)}" transform="translate(${P.x.toFixed(1)},${P.y.toFixed(1)})"><circle class="mn-hit" r="13" fill="transparent"/><circle class="mn-dot" r="6.5" fill="${SEV_COLOR[v.severity]|| '#e11d2a'}"/><title>${esc(v.name)} — ${esc(v.severity)} · ${esc(v.category)}</title></g>`;
   }).join('');
   const catEls = catOrder.map(cat=>{
     const idxs=nodes.map((v,i)=>v.category===cat?i:-1).filter(i=>i>=0); if(!idxs.length) return '';
